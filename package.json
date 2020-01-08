@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "forever ./build/http/start.js",
-    "dev": "nodemon --exec babel-node ./src/http/start.js --watch ./src",
+    "start": "forever ./build/http/app.js",
+    "dev": "nodemon --exec babel-node ./src/http/app.js --watch ./src",
     "clean": "rm -rf ./build && mkdir build",
     "test": "jest ./src/tests --coverage",
     "build": "npm run clean && babel ./src -d ./build --copy-files",
@@ -33,6 +33,7 @@
     "dotenv": "^6.2.0",
     "express": "^4.17.1",
     "express-requests-logger": "^2.0.5",
+    "firebase": "^7.6.1",
     "forever": "^1.0.0",
     "generate-password": "^1.4.2",
     "jsonwebtoken": "^8.5.1",
@@ -40,6 +41,7 @@
     "nodemailer": "^6.3.0",
     "nodemailer-mailgun-transport": "^1.4.0",
     "nodemon": "^1.19.1",
+    "redis": "^2.8.0",
     "uuid": "^3.3.3",
     "validator": "^11.1.0"
   },
