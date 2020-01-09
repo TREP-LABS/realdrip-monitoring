@@ -1,60 +1,40 @@
 import express from 'express';
-import path from 'path';
-import dotenv from 'dotenv';
-import db from './db';
 import * as redis from './redis';
-import { startListening, stopListening } from './session';
+import * as session from './session';
+import * as validation from './validation';
+import db from './db';
 
-dotenv.config();
-
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-app.use(express.static(path.join(__dirname, '..', '..', 'public')));
-
-// Enabling CORS for browser clients
-app.all('*', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', '*');
-  next();
-});
-
-const validateInput = () => {
-  // @todo: compost validation logic
-};
-
+const router = express.Router();
 const { Session } = db;
 
-app.post('/api/start', async (req, res) => {
-  validateInput(req.body);
-
+router.post('/start', validation.startListening, async (req, res) => {
   const {
     name, interval, deviceId, meta,
   } = req.body;
+  const { log } = res.locals;
 
   try {
     // If a session has already been started for this device, return error response.
     if (await redis.getAsync(deviceId)) return res.status(400).end('A session is ongoing for this device');
 
-    // Save a new session in the DB
+    log.debug('Save a new session into DB');
     const newSession = await new Session({
       name, interval, deviceId, meta,
     }).save();
 
     const sessionId = newSession.toJSON()._id;
+    // The interval value in milliseconds.
+    const intervalInMS = interval * 60 * 1000;
 
-    // Setup a listener for the device
-    startListening(deviceId, sessionId, interval);
+    log.debug('Start listening for changes to the data of this session');
+    await session.startListening(deviceId, sessionId, intervalInMS);
 
     return res.status(201).json({
       message: 'Session created successfully',
       data: newSession.toJSON(),
     });
   } catch (error) {
-    console.log('An error occured while trying to start a session');
-    console.log(error);
+    log.error('An error occured while trying to start a session: ', error);
     return res.status(500).json({
       message: 'An error occured while trying to start a session',
       error,
@@ -62,10 +42,9 @@ app.post('/api/start', async (req, res) => {
   }
 });
 
-app.post('/api/stop', async (req, res) => {
-  validateInput(req.body);
-
+router.post('/stop', validation.stopListening, async (req, res) => {
   const { deviceId } = req.body;
+  const { log } = res.locals;
 
   try {
     const sessionData = await redis.getAsync(deviceId);
@@ -75,16 +54,17 @@ app.post('/api/stop', async (req, res) => {
 
     const { sessionId, data, listenerId } = sessionDataAsJSON;
 
-    await stopListening(listenerId);
+    log.debug('Stop listening to changes to the data of this session');
+    await session.stopListening(listenerId);
 
+    log.debug('Update session in DB with the varying data of the session');
     await Session.updateOne({ _id: sessionId }, { $set: { data } });
 
     await redis.delAsync(deviceId);
 
     return res.status(200).end('Session stopped');
   } catch (error) {
-    console.log('An error occured while trying to stop a session');
-    console.log(error);
+    log.error('An error occured while trying to stop a session: ', error);
     return res.status(500).json({
       message: 'An error occured while trying to stop a session',
       error,
@@ -92,11 +72,9 @@ app.post('/api/stop', async (req, res) => {
   }
 });
 
-app.get('/api/sessions', async (req, res) => {
+router.get('/sessions', async (req, res) => {
   const sessions = await Session.find({});
   return res.status(200).json({ sessions });
 });
 
-app.listen(process.env.PORT || 9000, () => {
-  console.log('App listening on PORT', process.env.PORT || 9000);
-});
+export default router;

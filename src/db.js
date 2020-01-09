@@ -20,7 +20,6 @@ const Session = mongoose.model('Session', new Schema({
   data: Object,
 }));
 
-
 export default {
   Session,
 };
