@@ -3,6 +3,10 @@
   "env": {
     "jest": true,
     "node": true,
+    "browser": true,
+  },
+  "globals": {
+    "axios": true
   },
   "rules": {
     "no-underscore-dangle":"off"
