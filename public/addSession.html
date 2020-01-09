@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+  <title>Hello, world!</title>
+  <style>
+    .form-t {
+      width: 40%;
+      margin: 50px auto;
+    }
+
+    .form-t h1 {
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="form-t">
+
+
+    <h1>Add a session</h1>
+
+    <form class="needs-validation" novalidate>
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input type="text" class="form-control" id="name" placeholder="sample infusion" required>
+      </div>
+      <div class="form-group">
+        <label for="exampleFormControlSelect1">Device Label</label>
+        <select class="form-control" id="deviceLabels" defaultValue="sss" required>
+          <script src="/js/devices.js"></script>
+          <script>
+            const deviceIds = Object.keys(deviceIdToLabel);
+            document.querySelector('select#deviceLabels').innerHTML =
+              deviceIds.map(id => `<option value='${id}'>${deviceIdToLabel[id]}</option>`)
+          </script>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="meta">Meta</label>
+        <textarea class="form-control" id="meta" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="listenInterval">Listen Interval(Between 1 - 10minutes)</label>
+        <input type="number" class="form-control" id="listenInterval" min="1" max="10" value="1" required>
+      </div>
+      <button id="submit-btn" class="btn btn-primary" type="submit">Submit</button>
+    </form>
+  </div>
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+    integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script>
+        (function () {
+          'use strict';
+          window.addEventListener('load', function () {
+                        
+            var form = document.querySelector('needs-validation');
+            form.addEventListener('submit', function (event) {
+              event.preventDefault();
+              event.stopPropagation();
+              form.classList.add('was-validated');
+
+              if (form.checkValidity()) { // @todo: Confirm that this can work and is reliable in usage browsers
+                const name = document.querySelector('input#name').value;
+                const meta = document.querySelector('textarea#meta').value;
+                const deviceId = document.querySelector('select#deviceLabels').value;
+                const interval = Number(document.querySelector('input#listenInterval').value) || 1;
+
+                document.querySelector('button#submit-btn').setAttribute('disabled', true);
+
+                axios.post('/api/start', {
+                  name, meta, deviceId, interval
+                })
+                  .then(() => {
+                    document.querySelector('button#submit-btn').setAttribute('disabled', false);
+                    location.replace('/sessions');
+                  })
+                  .catch((error) => {
+                    document.querySelector('button#submit-btn').setAttribute('disabled');
+                    alert(`There was an error adding this session: ${error.response ? error.respnose.error : ''}`)
+                    console.log('Error adding session: ', error);
+                  });;
+              }
+            })
+          })
+        })();
+  </script>
+</body>
+
+</html>
