@@ -14,7 +14,7 @@ const stopSession = (event) => {
 
 const button = (sessionStopped, sessionId, deviceId) => {
   if (sessionStopped) {
-    return '<a href="#" class="btn btn-primary">View Graph</a>';
+    return '<a href="#" class="btn btn-primary">View Data</a>';
   }
   return `<a href="#" class="btn btn-danger" id="stop-session" data-sessionId="${sessionId}" data-deviceId="${deviceId}">Stop</a>`;
 };
